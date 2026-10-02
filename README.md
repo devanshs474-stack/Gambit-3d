@@ -131,3 +131,6 @@ node tests/ai.test.js         # tactics + legality      -> 12 passed
 - Any modern browser with WebGL. The AudioContext is created on the first
   user gesture (browser autoplay policy), so sounds start after the first tap.
 - Everything is computed and rendered locally — the page works fully offline.
+
+- just click the https://gambit-3d.vercel.app/  to play the game
+  
