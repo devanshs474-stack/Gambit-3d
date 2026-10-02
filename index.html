@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#141312">
+  <title>Gambit 3D — Chess</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>♞</text></svg>">
+</head>
+<body>
+  <!-- 3D viewport -->
+  <div id="scene-container" aria-label="3D chess board"></div>
+
+  <!-- Top bar -->
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-glyph">♞</span>
+      <span class="brand-name">Gambit <em>3D</em></span>
+    </div>
+    <div id="turn-chip" class="turn-chip">
+      <span id="turn-dot" class="dot white"></span>
+      <span id="turn-text">White to move</span>
+    </div>
+    <div class="top-actions">
+      <button id="btn-camera" class="icon-btn" title="Camera: cycle view (white / black / top)">🎥</button>
+      <button id="btn-sound" class="icon-btn" title="Toggle sound">🔊</button>
+      <button id="btn-settings" class="icon-btn" title="Settings">⚙️</button>
+    </div>
+    <div id="think-bar" class="think-bar"><div id="think-fill"></div></div>
+  </header>
+
+  <!-- History review banner -->
+  <div id="review-banner" class="review-banner hidden">
+    <span id="review-text">Viewing history</span>
+    <button id="btn-review-back" class="mini-btn">◀ Prev</button>
+    <button id="btn-review-fwd" class="mini-btn">Next ▶</button>
+    <button id="btn-review-live" class="mini-btn accent">● Return to game</button>
+  </div>
+
+  <!-- Side panel (desktop) / bottom sheet (mobile) -->
+  <aside id="panel">
+    <div class="panel-grip" id="panel-grip"><span></span></div>
+
+    <section class="setup-row">
+      <div class="seg" id="seg-mode" role="tablist">
+        <button data-mode="local" class="active">Two Players</button>
+        <button data-mode="ai">vs Computer</button>
+      </div>
+      <div class="seg small" id="seg-diff">
+        <button data-diff="easy">Easy</button>
+        <button data-diff="medium" class="active">Medium</button>
+        <button data-diff="hard">Hard</button>
+      </div>
+    </section>
+
+    <section class="player-row" id="row-black">
+      <div class="player-name"><span class="mini-dot black"></span> Black</div>
+      <div class="captured" id="captured-by-black"></div>
+      <div class="material" id="material-black"></div>
+    </section>
+
+    <section class="moves" id="moves-section">
+      <div class="moves-head">Moves</div>
+      <ol id="move-list" class="move-list"></ol>
+      <div id="moves-empty" class="moves-empty">No moves yet — White begins.</div>
+    </section>
+
+    <section class="player-row" id="row-white">
+      <div class="player-name"><span class="mini-dot white"></span> White</div>
+      <div class="captured" id="captured-by-white"></div>
+      <div class="material" id="material-white"></div>
+    </section>
+
+    <section class="actions">
+      <button id="btn-undo" class="btn">↶ Undo</button>
+      <button id="btn-new" class="btn primary">New Game</button>
+    </section>
+  </aside>
+
+  <!-- Mobile sheet toggle -->
+  <button id="panel-toggle" class="panel-toggle">☰ Game</button>
+
+  <!-- Promotion picker -->
+  <div id="promo-modal" class="modal hidden">
+    <div class="modal-card promo-card">
+      <h3>Promote pawn to…</h3>
+      <div class="promo-choices" id="promo-choices">
+        <button data-promo="Q" title="Queen"><span class="glyph">♕</span><span>Queen</span></button>
+        <button data-promo="R" title="Rook"><span class="glyph">♖</span><span>Rook</span></button>
+        <button data-promo="B" title="Bishop"><span class="glyph">♗</span><span>Bishop</span></button>
+        <button data-promo="N" title="Knight"><span class="glyph">♘</span><span>Knight</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div id="gameover-modal" class="modal hidden">
+    <div class="modal-card over-card">
+      <div id="over-icon" class="over-icon">♛</div>
+      <h2 id="over-title">Checkmate</h2>
+      <p id="over-reason">White wins</p>
+      <div id="over-score" class="over-score">1 – 0</div>
+      <div class="modal-actions">
+        <button id="btn-over-review" class="btn">Review board</button>
+        <button id="btn-over-new" class="btn primary">New game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-card settings-card">
+      <h2>Settings</h2>
+
+      <div class="setting">
+        <label>Sound effects</label>
+        <button id="set-sound" class="toggle on" aria-pressed="true"><span></span></button>
+      </div>
+
+      <div class="setting">
+        <label>Camera view</label>
+        <div class="seg" id="set-camera">
+          <button data-cam="white" class="active">White</button>
+          <button data-cam="black">Black</button>
+          <button data-cam="top">Top</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <label>Game mode <small>(next game)</small></label>
+        <div class="seg" id="set-mode">
+          <button data-mode="local">Two Players</button>
+          <button data-mode="ai">vs Computer</button>
+        </div>
+      </div>
+
+      <div class="setting" id="set-playas-row">
+        <label>Play as</label>
+        <div class="seg" id="set-playas">
+          <button data-side="w" class="active">White</button>
+          <button data-side="b">Black</button>
+        </div>
+      </div>
+
+      <div class="setting" id="set-diff-row">
+        <label>AI difficulty</label>
+        <div class="seg" id="set-diff">
+          <button data-diff="easy">Easy</button>
+          <button data-diff="medium" class="active">Medium</button>
+          <button data-diff="hard">Hard</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-settings-close" class="btn primary">Done</button>
+      </div>
+      <p class="hint">Drag to orbit · scroll / pinch to zoom · right-drag or shift-drag to pan</p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Scripts: vendor first, then engine → ai → textures → pieces → sound → scene → app -->
+  <script src="vendor/three.min.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/pieces.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
